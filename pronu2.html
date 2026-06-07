@@ -59,7 +59,7 @@
             border-color: #d81b60;
         }
 
-        /* 語速控制區域 */
+        /* 頂部全域語速控制區域 */
         .speed-control {
             margin-bottom: 20px;
             display: flex;
@@ -92,7 +92,6 @@
             margin-bottom: 10px;
         }
 
-        /* 主按鈕樣式 */
         .btn-primary {
             background-color: #d81b60;
             color: white;
@@ -111,7 +110,6 @@
             background-color: #ad1457;
         }
 
-        /* 清除按鈕樣式 */
         .btn-secondary {
             background-color: #9e9e9e;
             color: white;
@@ -139,7 +137,7 @@
             gap: 15px; 
         }
 
-        /* 每一筆歷史紀錄的卡片樣式 */
+        /* 歷史紀錄的卡片樣式 */
         .history-row {
             background-color: #fff0f5; 
             border: 2px solid #f8bbd0;
@@ -149,6 +147,7 @@
             align-items: center;
             justify-content: space-between; 
             animation: fadeIn 0.5s ease-out;
+            gap: 10px;
         }
 
         /* 文字內容區塊 */
@@ -156,11 +155,10 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            justify-content: center;
+            justify-content: flex-start;
             flex-grow: 1; 
         }
 
-        /* 每一個「字+拼音」的方塊 */
         .char-block {
             display: flex;
             flex-direction: column;
@@ -181,18 +179,34 @@
             line-height: 1.2;
         }
 
-        /* 每一行的小喇叭按鈕 */
-        .row-speak-btn {
-            background-color: #00897b;
+        /* 歷史紀錄右側的控制區塊 (包含拉桿、發音、複製) */
+        .row-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 歷史紀錄的專屬語速拉桿 */
+        .row-speed-slider {
+            width: 60px;
+            accent-color: #00897b;
+            cursor: pointer;
+        }
+
+        /* 歷史紀錄的圓形按鈕共用樣式 */
+        .row-action-btn {
             color: white;
             border: none;
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             font-size: 1.2rem;
             cursor: pointer;
-            margin-left: 10px;
-            flex-shrink: 0; 
             display: flex;
             align-items: center;
             justify-content: center;
@@ -200,8 +214,19 @@
             transition: transform 0.1s;
         }
 
-        .row-speak-btn:active {
+        .row-action-btn:active {
             transform: scale(0.9);
+        }
+
+        /* 喇叭按鈕 */
+        .speak-btn {
+            background-color: #00897b;
+        }
+
+        /* 複製按鈕 */
+        .copy-btn {
+            background-color: #1e88e5;
+            font-size: 1rem;
         }
 
         @keyframes fadeIn {
@@ -209,6 +234,21 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* 手機版排版調整：空間不夠時讓控制區塊換行 */
+        @media (max-width: 500px) {
+            .history-row {
+                flex-direction: column;
+            }
+            .content-group {
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .row-controls {
+                width: 100%;
+                justify-content: center;
+                box-sizing: border-box;
+            }
+        }
     </style>
 </head>
 <body>
@@ -221,7 +261,7 @@
         <input type="text" id="chineseInput" placeholder="輸入文字..." autocomplete="off">
         
         <div class="speed-control">
-            <label>語速：<span id="speedLabel">1.0x</span></label>
+            <label>預設語速：<span id="speedLabel">1.0x</span></label>
             <input type="range" id="speedSlider" min="0" max="4" step="1" value="2" oninput="updateSpeedLabel()">
             <div class="speed-labels">
                 <span>慢</span>
@@ -239,20 +279,16 @@
     </div>
 
     <script>
-        // 設定語速對應陣列
         const speedMap = [0.5, 0.75, 1.0, 1.5, 2.0];
         let preferredVoice = null;
 
-        // 載入並篩選 Google 普通話語音
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
-            // 尋找 Google 的大陸普通話語音，若無則使用預設中文語音
             preferredVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('zh-CN'))
                           || voices.find(voice => voice.lang === 'zh-CN')
                           || voices.find(voice => voice.lang.includes('zh'));
         }
 
-        // 當瀏覽器語音庫載入完成時觸發
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = loadVoices;
         }
@@ -260,7 +296,6 @@
         function updateSpeedLabel() {
             const sliderValue = document.getElementById('speedSlider').value;
             const currentSpeed = speedMap[sliderValue];
-            // 確保顯示格式如 1.0x 
             document.getElementById('speedLabel').innerText = (currentSpeed % 1 === 0 ? currentSpeed + '.0' : currentSpeed) + 'x';
         }
 
@@ -307,49 +342,99 @@
                     contentDiv.appendChild(block);
                 });
 
+                // 建立右側控制區塊 (包含專屬拉桿、喇叭按鈕、複製按鈕)
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'row-controls';
+
+                // 1. 該行的專屬語速拉桿 (預設值跟隨當下全域拉桿的值)
+                const currentGlobalSliderValue = document.getElementById('speedSlider').value;
+                const rowSlider = document.createElement('input');
+                rowSlider.type = 'range';
+                rowSlider.min = '0';
+                rowSlider.max = '4';
+                rowSlider.step = '1';
+                rowSlider.value = currentGlobalSliderValue;
+                rowSlider.className = 'row-speed-slider';
+                rowSlider.title = "調整此行的語速";
+
+                // 2. 喇叭按鈕
                 const speakBtn = document.createElement('button');
-                speakBtn.className = 'row-speak-btn';
+                speakBtn.className = 'row-action-btn speak-btn';
                 speakBtn.innerHTML = '🔊';
+                speakBtn.title = "朗讀";
                 speakBtn.onclick = function() {
-                    speakText(text);
+                    const rowSpeed = speedMap[rowSlider.value];
+                    speakText(text, rowSpeed); // 傳入這行的專屬語速
                 };
 
-                rowDiv.appendChild(contentDiv);
-                rowDiv.appendChild(speakBtn);
+                // 3. 複製按鈕
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'row-action-btn copy-btn';
+                copyBtn.innerHTML = '📋';
+                copyBtn.title = "複製文字";
+                copyBtn.onclick = function() {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // 複製成功時，短暫改變圖示作為回饋
+                        const originalHtml = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '✅';
+                        copyBtn.style.backgroundColor = '#4caf50'; // 變成綠色
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalHtml;
+                            copyBtn.style.backgroundColor = ''; // 恢復原本顏色
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('複製失敗:', err);
+                        alert("複製失敗，請手動複製。");
+                    });
+                };
 
-                // 【修改點】將最新的內容加到結果區域的最上方 (prepend)
+                // 將控制元件加入控制區塊
+                controlsDiv.appendChild(rowSlider);
+                controlsDiv.appendChild(speakBtn);
+                controlsDiv.appendChild(copyBtn);
+
+                // 將文字區塊與控制區塊加入該行
+                rowDiv.appendChild(contentDiv);
+                rowDiv.appendChild(controlsDiv);
+
+                // 將最新內容加到最上方
                 resultArea.prepend(rowDiv);
 
             } catch (error) {
                 console.error(error);
             }
 
-            // 發音
-            speakText(text);
+            // 初次新增時發音 (使用全域語速)
+            const globalSliderValue = document.getElementById('speedSlider').value;
+            speakText(text, speedMap[globalSliderValue]);
 
-            // 清空輸入框並保持焦點
+            // 清空輸入框
             setTimeout(() => {
                 inputField.value = '';
                 inputField.focus();
             }, 100);
         }
 
-        function speakText(text) {
+        // 發音函式 (支援自訂語速)
+        function speakText(text, customRate = null) {
             if (!window.speechSynthesis) return;
-            window.speechSynthesis.cancel(); // 停止目前正在播放的語音
+            window.speechSynthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(text);
             
-            // 設定語音 (優先使用 Google 普通話)
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
             } else {
                 utterance.lang = 'zh-CN'; 
             }
             
-            // 讀取拉桿的語速
-            const sliderValue = document.getElementById('speedSlider').value;
-            utterance.rate = speedMap[sliderValue]; 
+            // 判斷是否有傳入獨立語速，若無則使用全域語速
+            if (customRate !== null) {
+                utterance.rate = customRate;
+            } else {
+                const sliderValue = document.getElementById('speedSlider').value;
+                utterance.rate = speedMap[sliderValue]; 
+            }
             
             window.speechSynthesis.speak(utterance);
         }
@@ -360,7 +445,6 @@
             }
         });
         
-        // 頁面載入時先嘗試讀取一次語音清單
         loadVoices();
     </script>
 
