@@ -14,26 +14,483 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            /* 將高度限制在螢幕範圍內，避免整個網頁跟著滑動 */
+            height: 100vh;
             margin: 0;
-            padding-top: 20px;
-            padding-bottom: 50px; /* 底部留多點空間 */
+            padding-top: 3vh;
+            padding-bottom: 3vh;
+            box-sizing: border-box;
             text-align: center;
+        }
+
+        .container {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 85%;
+            max-width: 600px;
+            /* 讓容器可以靈活分配內部高度 */
+            display: flex;
+            flex-direction: column;
+            max-height: 94vh; 
+        }
+
+        /* -------------------------------------
+           新增：將頂部輸入區包裝起來，設定不被壓縮
+        -------------------------------------- */
+        .top-controls {
+            flex-shrink: 0; /* 確保輸入區不會因為下方紀錄變多而被擠壓 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #f8bbd0; /* 加上一條分隔線 */
         }
 
         h1 {
             color: #d81b60;
             font-size: 2.2rem;
+            margin-top: 10px;
             margin-bottom: 5px;
         }
 
         .subtitle {
             color: #880e4f;
             font-size: 1.1rem;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-weight: normal;
         }
 
+        input[type="text"] {
+            width: 80%;
+            padding: 15px;
+            font-size: 1.5rem;
+            border: 3px solid #f8bbd0;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            outline: none;
+            color: #333;
+        }
+
+        input[type="text"]:focus {
+            border-color: #d81b60;
+        }
+
+        /* 頂部全域語速控制區域 */
+        .speed-control {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #880e4f;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .speed-control input[type="range"] {
+            width: 60%;
+            margin-top: 10px;
+            accent-color: #d81b60;
+        }
+
+        .speed-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 60%;
+            font-size: 0.8rem;
+            color: #ad1457;
+            margin-top: 5px;
+        }
+
+        /* 按鈕群組 */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 5px;
+        }
+
+        .btn-primary {
+            background-color: #d81b60;
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1.4rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(216, 27, 96, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+            background-color: #ad1457;
+        }
+
+        .btn-secondary {
+            background-color: #9e9e9e;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(158, 158, 158, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.95);
+            background-color: #757575;
+        }
+
+        /* -------------------------------------
+           修改：結果顯示區域設定獨立捲動
+        -------------------------------------- */
+        #result-area {
+            margin-top: 15px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+            overflow-y: auto; /* 開啟垂直捲動 */
+            flex-grow: 1; /* 填滿剩下的所有空間 */
+            min-height: 0; /* 確保 Flexbox 佈局不會超出容器 */
+            padding-right: 10px; /* 留出捲動條的空間 */
+            padding-bottom: 10px;
+        }
+
+        /* 美化捲動條 */
+        #result-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        #result-area::-webkit-scrollbar-track {
+            background: #fff0f5; 
+            border-radius: 10px;
+        }
+        #result-area::-webkit-scrollbar-thumb {
+            background: #f8bbd0; 
+            border-radius: 10px;
+        }
+        #result-area::-webkit-scrollbar-thumb:hover {
+            background: #d81b60; 
+        }
+
+        /* 歷史紀錄的卡片樣式 */
+        .history-row {
+            background-color: #fff0f5; 
+            border: 2px solid #f8bbd0;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            animation: fadeIn 0.4s ease-out;
+            gap: 10px;
+        }
+
+        /* 文字內容區塊 */
+        .content-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start;
+            flex-grow: 1; 
+        }
+
+        .char-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pinyin-text {
+            font-size: 1.1rem;
+            color: #880e4f;
+            font-family: 'Arial', sans-serif;
+            margin-bottom: -5px;
+        }
+
+        .chinese-text {
+            font-size: 2.2rem;
+            color: #d81b60;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        /* 歷史紀錄右側的控制區塊 */
+        .row-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 歷史紀錄的專屬語速拉桿 */
+        .row-speed-slider {
+            width: 60px;
+            accent-color: #00897b;
+            cursor: pointer;
+        }
+
+        /* 歷史紀錄的圓形按鈕共用樣式 */
+        .row-action-btn {
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .row-action-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* 喇叭按鈕 */
+        .speak-btn {
+            background-color: #00897b;
+        }
+
+        /* 複製按鈕 */
+        .copy-btn {
+            background-color: #1e88e5;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 手機版排版調整：空間不夠時讓控制區塊換行 */
+        @media (max-width: 500px) {
+            .history-row {
+                flex-direction: column;
+            }
+            .content-group {
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .row-controls {
+                width: 100%;
+                justify-content: center;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 將頂部固定的部分用 top-controls 包起來 -->
+        <div class="top-controls">
+            <h1>你的普通話老師</h1>
+            
+            <p class="subtitle">請輸入你想我讀的生字或句子</p>
+            
+            <input type="text" id="chineseInput" placeholder="輸入文字..." autocomplete="off">
+            
+            <div class="speed-control">
+                <label>預設語速：<span id="speedLabel">1.0x</span></label>
+                <input type="range" id="speedSlider" min="0" max="4" step="1" value="2" oninput="updateSpeedLabel()">
+                <div class="speed-labels">
+                    <span>慢</span>
+                    <span>正常</span>
+                    <span>快</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="startLearning()">朗讀</button>
+                <button class="btn-secondary" onclick="clearAll()">清除全部</button>
+            </div>
+        </div>
+
+        <!-- 下方紀錄會在這個區域內獨立捲動 -->
+        <div id="result-area"></div>
+        
+    </div>
+
+    <script>
+        const speedMap = [0.5, 0.75, 1.0, 1.5, 2.0];
+        let preferredVoice = null;
+
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            preferredVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('zh-CN'))
+                          || voices.find(voice => voice.lang === 'zh-CN')
+                          || voices.find(voice => voice.lang.includes('zh'));
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function updateSpeedLabel() {
+            const sliderValue = document.getElementById('speedSlider').value;
+            const currentSpeed = speedMap[sliderValue];
+            document.getElementById('speedLabel').innerText = (currentSpeed % 1 === 0 ? currentSpeed + '.0' : currentSpeed) + 'x';
+        }
+
+        function clearAll() {
+            document.getElementById('result-area').innerHTML = '';
+            document.getElementById('chineseInput').focus();
+        }
+
+        function startLearning() {
+            const inputField = document.getElementById('chineseInput');
+            const text = inputField.value.trim();
+            const resultArea = document.getElementById('result-area');
+
+            if (!text) return; 
+
+            try {
+                if (typeof pinyinPro === 'undefined') return;
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'history-row';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content-group';
+
+                const pinyinArray = pinyinPro.pinyin(text, { toneType: 'symbol', type: 'array' });
+                const charArray = text.split('');
+
+                charArray.forEach((char, index) => {
+                    if(char.trim() === '') return;
+
+                    const block = document.createElement('div');
+                    block.className = 'char-block';
+
+                    const pyDiv = document.createElement('div');
+                    pyDiv.className = 'pinyin-text';
+                    pyDiv.innerText = pinyinArray[index] || ''; 
+
+                    const chDiv = document.createElement('div');
+                    chDiv.className = 'chinese-text';
+                    chDiv.innerText = char;
+
+                    block.appendChild(pyDiv);
+                    block.appendChild(chDiv);
+                    contentDiv.appendChild(block);
+                });
+
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'row-controls';
+
+                const currentGlobalSliderValue = document.getElementById('speedSlider').value;
+                const rowSlider = document.createElement('input');
+                rowSlider.type = 'range';
+                rowSlider.min = '0';
+                rowSlider.max = '4';
+                rowSlider.step = '1';
+                rowSlider.value = currentGlobalSliderValue;
+                rowSlider.className = 'row-speed-slider';
+                rowSlider.title = "調整此行的語速";
+
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'row-action-btn speak-btn';
+                speakBtn.innerHTML = '🔊';
+                speakBtn.title = "朗讀";
+                speakBtn.onclick = function() {
+                    const rowSpeed = speedMap[rowSlider.value];
+                    speakText(text, rowSpeed); 
+                };
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'row-action-btn copy-btn';
+                copyBtn.innerHTML = '📋';
+                copyBtn.title = "複製文字";
+                copyBtn.onclick = function() {
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalHtml = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '✅';
+                        copyBtn.style.backgroundColor = '#4caf50'; 
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalHtml;
+                            copyBtn.style.backgroundColor = ''; 
+                        }, 1500);
+                    }).catch(err => {
+                        console.error('複製失敗:', err);
+                        alert("複製失敗，請手動複製。");
+                    });
+                };
+
+                controlsDiv.appendChild(rowSlider);
+                controlsDiv.appendChild(speakBtn);
+                controlsDiv.appendChild(copyBtn);
+
+                rowDiv.appendChild(contentDiv);
+                rowDiv.appendChild(controlsDiv);
+
+                resultArea.prepend(rowDiv);
+                
+                // 【新增細節】每次加入新詞時，自動將捲動條拉回最上方，確保看得到最新內容
+                resultArea.scrollTop = 0;
+
+            } catch (error) {
+                console.error(error);
+            }
+
+            const globalSliderValue = document.getElementById('speedSlider').value;
+            speakText(text, speedMap[globalSliderValue]);
+
+            setTimeout(() => {
+                inputField.value = '';
+                inputField.focus();
+            }, 100);
+        }
+
+        function speakText(text, customRate = null) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            } else {
+                utterance.lang = 'zh-CN'; 
+            }
+            
+            if (customRate !== null) {
+                utterance.rate = customRate;
+            } else {
+                const sliderValue = document.getElementById('speedSlider').value;
+                utterance.rate = speedMap[sliderValue]; 
+            }
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById('chineseInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                startLearning();
+            }
+        });
+        
+        loadVoices();
+    </script>
+
+</body>
+</html>
         .container {
             background: white;
             padding: 30px;
