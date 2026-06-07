@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>普通話老師</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.13.2/dist/index.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            background-color: #fce4ec;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 20px;
+            padding-bottom: 50px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #d81b60;
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #880e4f;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            font-weight: normal;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 85%;
+            max-width: 600px;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 15px;
+            font-size: 1.5rem;
+            border: 3px solid #f8bbd0;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            outline: none;
+            color: #333;
+        }
+
+        input[type="text"]:focus {
+            border-color: #d81b60;
+        }
+
+        /* 語速控制區域 */
+        .speed-control {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #880e4f;
+            font-weight: bold;
+        }
+
+        .speed-control input[type="range"] {
+            width: 60%;
+            margin-top: 10px;
+            accent-color: #d81b60;
+        }
+
+        .speed-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 60%;
+            font-size: 0.8rem;
+            color: #ad1457;
+            margin-top: 5px;
+        }
+
+        /* 按鈕群組 */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        /* 主按鈕樣式 */
+        .btn-primary {
+            background-color: #d81b60;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(216, 27, 96, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.95);
+            background-color: #ad1457;
+        }
+
+        /* 清除按鈕樣式 */
+        .btn-secondary {
+            background-color: #9e9e9e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(158, 158, 158, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.95);
+            background-color: #757575;
+        }
+
+        /* 結果顯示區域 */
+        #result-area {
+            margin-top: 30px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; 
+        }
+
+        /* 每一筆歷史紀錄的卡片樣式 */
+        .history-row {
+            background-color: #fff0f5; 
+            border: 2px solid #f8bbd0;
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; 
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* 文字內容區塊 */
+        .content-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            flex-grow: 1; 
+        }
+
+        /* 每一個「字+拼音」的方塊 */
+        .char-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pinyin-text {
+            font-size: 1.1rem;
+            color: #880e4f;
+            font-family: 'Arial', sans-serif;
+            margin-bottom: -5px;
+        }
+
+        .chinese-text {
+            font-size: 2.2rem;
+            color: #d81b60;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        /* 每一行的小喇叭按鈕 */
+        .row-speak-btn {
+            background-color: #00897b;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 10px;
+            flex-shrink: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        .row-speak-btn:active {
+            transform: scale(0.9);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>你的普通話老師</h1>
+        
+        <p class="subtitle">請輸入你想我讀的生字或句子</p>
+        
+        <input type="text" id="chineseInput" placeholder="輸入文字..." autocomplete="off">
+        
+        <div class="speed-control">
+            <label>語速：<span id="speedLabel">1.0x</span></label>
+            <input type="range" id="speedSlider" min="0" max="4" step="1" value="2" oninput="updateSpeedLabel()">
+            <div class="speed-labels">
+                <span>慢</span>
+                <span>正常</span>
+                <span>快</span>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="startLearning()">朗讀</button>
+            <button class="btn-secondary" onclick="clearAll()">清除全部</button>
+        </div>
+
+        <div id="result-area"></div>
+    </div>
+
+    <script>
+        // 設定語速對應陣列
+        const speedMap = [0.5, 0.75, 1.0, 1.5, 2.0];
+        let preferredVoice = null;
+
+        // 載入並篩選 Google 普通話語音
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // 尋找 Google 的大陸普通話語音，若無則使用預設中文語音
+            preferredVoice = voices.find(voice => voice.name.includes('Google') && voice.lang.includes('zh-CN'))
+                          || voices.find(voice => voice.lang === 'zh-CN')
+                          || voices.find(voice => voice.lang.includes('zh'));
+        }
+
+        // 當瀏覽器語音庫載入完成時觸發
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function updateSpeedLabel() {
+            const sliderValue = document.getElementById('speedSlider').value;
+            const currentSpeed = speedMap[sliderValue];
+            // 確保顯示格式如 1.0x 
+            document.getElementById('speedLabel').innerText = (currentSpeed % 1 === 0 ? currentSpeed + '.0' : currentSpeed) + 'x';
+        }
+
+        function clearAll() {
+            document.getElementById('result-area').innerHTML = '';
+            document.getElementById('chineseInput').focus();
+        }
+
+        function startLearning() {
+            const inputField = document.getElementById('chineseInput');
+            const text = inputField.value.trim();
+            const resultArea = document.getElementById('result-area');
+
+            if (!text) return; 
+
+            try {
+                if (typeof pinyinPro === 'undefined') return;
+
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'history-row';
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content-group';
+
+                const pinyinArray = pinyinPro.pinyin(text, { toneType: 'symbol', type: 'array' });
+                const charArray = text.split('');
+
+                charArray.forEach((char, index) => {
+                    if(char.trim() === '') return;
+
+                    const block = document.createElement('div');
+                    block.className = 'char-block';
+
+                    const pyDiv = document.createElement('div');
+                    pyDiv.className = 'pinyin-text';
+                    pyDiv.innerText = pinyinArray[index] || ''; 
+
+                    const chDiv = document.createElement('div');
+                    chDiv.className = 'chinese-text';
+                    chDiv.innerText = char;
+
+                    block.appendChild(pyDiv);
+                    block.appendChild(chDiv);
+                    contentDiv.appendChild(block);
+                });
+
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'row-speak-btn';
+                speakBtn.innerHTML = '🔊';
+                speakBtn.onclick = function() {
+                    speakText(text);
+                };
+
+                rowDiv.appendChild(contentDiv);
+                rowDiv.appendChild(speakBtn);
+
+                // 【修改點】將最新的內容加到結果區域的最上方 (prepend)
+                resultArea.prepend(rowDiv);
+
+            } catch (error) {
+                console.error(error);
+            }
+
+            // 發音
+            speakText(text);
+
+            // 清空輸入框並保持焦點
+            setTimeout(() => {
+                inputField.value = '';
+                inputField.focus();
+            }, 100);
+        }
+
+        function speakText(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel(); // 停止目前正在播放的語音
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // 設定語音 (優先使用 Google 普通話)
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            } else {
+                utterance.lang = 'zh-CN'; 
+            }
+            
+            // 讀取拉桿的語速
+            const sliderValue = document.getElementById('speedSlider').value;
+            utterance.rate = speedMap[sliderValue]; 
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        document.getElementById('chineseInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                startLearning();
+            }
+        });
+        
+        // 頁面載入時先嘗試讀取一次語音清單
+        loadVoices();
+    </script>
+
+</body>
+</html>
